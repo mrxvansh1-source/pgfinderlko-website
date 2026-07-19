@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Profile | PG Lucknow</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --saffron: #FF6B2B;
+    --saffron-light: #FF8C55;
+    --gold: #D4AF37;
+    --deep: #170905;
+    --deep2: #2A0F08;
+    --card-bg: #FFF8F3;
+    --white: #ffffff;
+    --text: #2D1A0E;
+    --muted: #8A6A5A;
+    --border: #F0D9CC;
+    --green: #2ECC71;
+    --red: #E74C3C;
+    --tag-bg: #FFF0E8;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Hind', sans-serif;
+    background: #FFF5EE;
+    color: var(--text);
+    min-height: 100vh;
+    padding-bottom: 40px;
+  }
+
+  nav {
+    background: linear-gradient(120deg, var(--deep) 0%, var(--deep2) 100%);
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 20px rgba(0,0,0,0.35);
+    border-bottom: 1px solid rgba(212,175,55,0.35);
+  }
+  .logo { font-family: 'Baloo 2', cursive; font-size: 22px; font-weight: 800; color: var(--white); }
+  .logo span { color: var(--gold); }
+  .nav-btns { display: flex; gap: 10px; }
+  .nav-btn {
+    padding: 7px 16px; border-radius: 8px; font-size: 14px; font-weight: 600;
+    cursor: pointer; border: none; transition: all 0.2s;
+  }
+  .nav-btn.outline { background: transparent; border: 1.5px solid rgba(212,175,55,0.45); color: var(--white); }
+  .nav-btn.outline:hover { border-color: var(--gold); color: var(--gold); }
+  .nav-btn.filled { background: linear-gradient(120deg, var(--saffron), var(--gold)); color: var(--deep); font-weight: 700; }
+  .nav-btn.filled:hover { filter: brightness(1.08); }
+
+  .profile-header {
+    max-width: 900px;
+    margin: 24px auto 10px;
+    padding: 22px;
+    background: white;
+    border: 1.5px solid var(--border);
+    border-top: 3px solid var(--gold);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .avatar {
+    width: 60px; height: 60px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--saffron), var(--gold)); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Baloo 2', cursive; font-size: 1.4rem; font-weight: 700;
+    flex-shrink: 0;
+  }
+  .profile-info h2 { font-family: 'Baloo 2', cursive; font-size: 1.2rem; }
+  .profile-info p { color: var(--muted); font-size: 0.85rem; margin-top: 2px; }
+  .role-badge {
+    margin-top: 6px; display: inline-block; font-size: 0.7rem; font-weight: 700;
+    padding: 3px 10px; border-radius: 20px; background: var(--saffron); color: #fff;
+  }
+  .role-badge.student { background: var(--green); }
+
+  .stats-row {
+    max-width: 900px; margin: 16px auto; padding: 0 20px;
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;
+  }
+  .stat-card {
+    background: white; border: 1.5px solid var(--border); border-radius: 14px;
+    padding: 16px; text-align: center;
+  }
+  .stat-card .num { font-family: 'Baloo 2', cursive; font-size: 1.6rem; font-weight: 800; color: var(--saffron); }
+  .stat-card .label { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+
+  .section { max-width: 900px; margin: 24px auto; padding: 0 20px; }
+  .section h3 {
+    font-family: 'Baloo 2', cursive; font-size: 1.05rem; margin-bottom: 12px;
+    border-left: 4px solid var(--saffron); padding-left: 10px;
+  }
+
+  .list-item {
+    background: white; border: 1.5px solid var(--border); border-radius: 14px;
+    padding: 14px 16px; margin-bottom: 12px;
+  }
+  .li-top {
+    display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; flex-wrap: wrap;
+  }
+  .li-name { font-family: 'Baloo 2', cursive; font-weight: 700; font-size: 0.98rem; }
+  .li-sub { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+  .price-tag { font-family: 'Baloo 2', cursive; font-weight: 800; color: var(--saffron); font-size: 1rem; white-space: nowrap; }
+  .status-pill {
+    font-size: 0.72rem; font-weight: 700; padding: 3px 10px; border-radius: 12px;
+    background: var(--tag-bg); color: var(--saffron); white-space: nowrap;
+  }
+
+  .contact-row { display: flex; gap: 8px; margin-top: 12px; }
+  .contact-btn {
+    flex: 1; padding: 9px; border: none; border-radius: 9px;
+    font-size: 0.85rem; font-weight: 700; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 5px;
+  }
+  .contact-btn.wa { background: #25D366; color: white; }
+  .contact-btn.wa:hover { background: #20c45d; }
+  .contact-btn.call { background: var(--saffron); color: white; }
+  .contact-btn.call:hover { background: var(--saffron-light); }
+
+  .empty-msg {
+    color: var(--muted); font-size: 0.9rem; padding: 24px;
+    text-align: center; background: white; border: 1.5px dashed var(--border); border-radius: 14px;
+  }
+  .loading-msg { text-align: center; color: var(--muted); padding: 20px; font-size: 0.9rem; }
+
+  @media (max-width: 600px) {
+    .stats-row { padding: 0 12px; gap: 8px; }
+    .profile-header { margin: 16px 12px; padding: 16px; }
+    .section { padding: 0 12px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">PG<span>Lucknow</span></div>
+  <div class="nav-btns">
+    <button class="nav-btn outline" onclick="location.href='index.html'">🏠 Home</button>
+    <button class="nav-btn filled" id="logoutBtn">Logout</button>
+  </div>
+</nav>
+
+<div class="profile-header">
+  <div class="avatar" id="avatarInitial">U</div>
+  <div class="profile-info">
+    <h2 id="userName">Loading...</h2>
+    <p id="userEmail"></p>
+    <span class="role-badge" id="roleBadge">--</span>
+  </div>
+</div>
+
+<!-- LANDLORD VIEW -->
+<div id="landlordView" style="display:none;">
+  <div class="stats-row">
+    <div class="stat-card"><div class="num" id="totalRooms">0</div><div class="label">Rooms Listed</div></div>
+    <div class="stat-card"><div class="num" id="totalEnquiries">0</div><div class="label">Enquiries Received</div></div>
+  </div>
+
+  <div class="section">
+    <h3>🏠 Aapki Listings</h3>
+    <div id="landlordRoomList"><div class="loading-msg">Loading...</div></div>
+  </div>
+
+  <div class="section">
+    <h3>📩 Enquiries — Student Contact Details</h3>
+    <div id="landlordEnquiryList"><div class="loading-msg">Loading...</div></div>
+  </div>
+</div>
+
+<!-- STUDENT VIEW -->
+<div id="studentView" style="display:none;">
+  <div class="section">
+    <h3>❤️ Favourite PGs</h3>
+    <div id="favRoomList"><div class="loading-msg">Loading...</div></div>
+  </div>
+
+  <div class="section">
+    <h3>📩 Aapki Enquiries</h3>
+    <div id="studentEnquiryList"><div class="loading-msg">Loading...</div></div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  import { getFirestore, collection, getDocs, doc, getDoc, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+  // Same Firebase project jo main site (index.html) me use ho raha hai
+  const firebaseConfig = {
+      apiKey: "AIzaSyC3XLSN2Y6yN-WBxWjnNZT4O4R9U9fPfOI",
+      authDomain: "pg-finder-abe93.firebaseapp.com",
+      projectId: "pg-finder-abe93",
+      storageBucket: "pg-finder-abe93.firebasestorage.app",
+      messagingSenderId: "78921590074",
+      appId: "1:78921590074:web:290f8e9c1d2ed760895c03",
+      measurementId: "G-33EN5T9D0N"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str == null ? '' : str;
+    return div.innerHTML;
+  }
+
+  document.getElementById('logoutBtn').addEventListener('click', () => {
+    signOut(auth).then(() => { window.location.href = "index.html"; });
+  });
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      // Login nahi hai to home page bhej do
+      window.location.href = "index.html";
+      return;
+    }
+
+    document.getElementById('userName').textContent = user.displayName || user.email.split('@')[0];
+    document.getElementById('userEmail').textContent = user.email || '';
+    document.getElementById('avatarInitial').textContent = (user.displayName || user.email || 'U').charAt(0).toUpperCase();
+
+    // Role + favourites Firestore se lo (fallback localStorage)
+    let role = localStorage.getItem("role_" + user.uid) || null;
+    let favourites = [];
+    try {
+      const userSnap = await getDoc(doc(db, "users", user.uid));
+      if (userSnap.exists()) {
+        const data = userSnap.data();
+        if (data.role) role = data.role;
+        favourites = data.favourites || [];
+      }
+    } catch (e) { console.error(e); }
+
+    if (!role) {
+      // Role set nahi hai to home bhej do jaha role-selection popup aata hai
+      window.location.href = "index.html";
+      return;
+    }
+
+    // Saari listings ek baar mein le lo, enquiries role ke hisaab se filtered query karo
+    let allListings = [];
+    let allEnquiries = [];
+    try {
+      const listSnap = await getDocs(collection(db, "listings"));
+      listSnap.forEach(d => allListings.push({ docId: d.id, ...d.data() }));
+    } catch (e) { console.error(e); }
+    try {
+      const fieldName = role === 'landlord' ? 'landlordId' : 'studentId';
+      const enqQuery = query(collection(db, "enquiries"), where(fieldName, '==', user.uid));
+      const enqSnap = await getDocs(enqQuery);
+      enqSnap.forEach(d => allEnquiries.push({ enqId: d.id, ...d.data() }));
+    } catch (e) { console.error(e); }
+
+    if (role === 'landlord') {
+      document.getElementById('roleBadge').textContent = '🏠 Landlord';
+      document.getElementById('landlordView').style.display = 'block';
+      renderLandlord(allListings, allEnquiries, user.uid);
+    } else {
+      document.getElementById('roleBadge').textContent = '🎓 Student';
+      document.getElementById('roleBadge').classList.add('student');
+      document.getElementById('studentView').style.display = 'block';
+      renderStudent(allListings, allEnquiries, user.uid, favourites);
+    }
+  });
+
+  function renderLandlord(allListings, allEnquiries, uid) {
+    const myListings = allListings.filter(p => p.ownerId === uid);
+    const myEnquiries = allEnquiries.filter(e => e.landlordId === uid).sort((a,b) => (b.timestamp||0) - (a.timestamp||0));
+
+    document.getElementById('totalRooms').textContent = myListings.length;
+    document.getElementById('totalEnquiries').textContent = myEnquiries.length;
+
+    const roomBox = document.getElementById('landlordRoomList');
+    if (!myListings.length) {
+      roomBox.innerHTML = '<div class="empty-msg">Aapne abhi tak koi PG list nahi kiya.</div>';
+    } else {
+      roomBox.innerHTML = myListings.map(pg =>
+        '<div class="list-item"><div class="li-top">' +
+          '<div><div class="li-name">' + escapeHtml(pg.name) + '</div><div class="li-sub">📍 ' + escapeHtml(pg.area) + ', Lucknow</div></div>' +
+          '<div class="price-tag">₹' + pg.price.toLocaleString() + '/mo</div>' +
+        '</div></div>'
+      ).join('');
+    }
+
+    const enqBox = document.getElementById('landlordEnquiryList');
+    if (!myEnquiries.length) {
+      enqBox.innerHTML = '<div class="empty-msg">Abhi tak koi enquiry nahi aayi.</div>';
+    } else {
+      enqBox.innerHTML = myEnquiries.map(e => {
+        const phone = e.studentPhone || '';
+        return '<div class="list-item"><div class="li-top">' +
+          '<div><div class="li-name">' + escapeHtml(e.studentName || 'Student') + '</div>' +
+          '<div class="li-sub">📍 ' + escapeHtml(e.listingName || '') + '</div>' +
+          '<div class="li-sub">📞 ' + escapeHtml(phone || 'Number nahi mila') + '</div></div>' +
+          '<span class="status-pill">' + (e.status || 'Pending') + '</span>' +
+        '</div>' +
+        (phone ? '<div class="contact-row">' +
+          '<button class="contact-btn wa" onclick="window.open(\'https://wa.me/91' + phone + '?text=' + encodeURIComponent('Namaste ' + (e.studentName||'') + '! Aapne ' + (e.listingName||'') + ' ke liye enquiry ki thi.') + '\',\'_blank\')">💬 WhatsApp</button>' +
+          '<button class="contact-btn call" onclick="window.open(\'tel:+91' + phone + '\')">📞 Call</button>' +
+        '</div>' : '') +
+        '</div>';
+      }).join('');
+    }
+  }
+
+  function renderStudent(allListings, allEnquiries, uid, favourites) {
+    const favListings = allListings.filter(p => favourites.includes(p.docId));
+    const favBox = document.getElementById('favRoomList');
+    if (!favListings.length) {
+      favBox.innerHTML = '<div class="empty-msg">Abhi tak koi PG favourite nahi kiya. Home page pe card ke ♥ icon par tap karo.</div>';
+    } else {
+      favBox.innerHTML = favListings.map(pg =>
+        '<div class="list-item"><div class="li-top">' +
+          '<div><div class="li-name">' + escapeHtml(pg.name) + '</div><div class="li-sub">📍 ' + escapeHtml(pg.area) + ', Lucknow</div></div>' +
+          '<div class="price-tag">₹' + pg.price.toLocaleString() + '/mo</div>' +
+        '</div></div>'
+      ).join('');
+    }
+
+    const myEnquiries = allEnquiries.filter(e => e.studentId === uid).sort((a,b) => (b.timestamp||0) - (a.timestamp||0));
+    const enqBox = document.getElementById('studentEnquiryList');
+    if (!myEnquiries.length) {
+      enqBox.innerHTML = '<div class="empty-msg">Aapne abhi tak koi enquiry nahi bheji.</div>';
+    } else {
+      enqBox.innerHTML = myEnquiries.map(e =>
+        '<div class="list-item"><div class="li-top">' +
+          '<div><div class="li-name">' + escapeHtml(e.listingName || '') + '</div></div>' +
+          '<span class="status-pill">' + (e.status || 'Pending') + '</span>' +
+        '</div></div>'
+      ).join('');
+    }
+  }
+</script>
+</body>
+</html>

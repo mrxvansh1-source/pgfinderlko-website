@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>About Us | PG Lucknow — Founded by Vansh Maurya</title>
+<meta name="description" content="PG Lucknow was founded by Vansh Maurya, a 21-year-old developer from Lucknow, to help students and working professionals find verified, zero-brokerage PG accommodation across the city.">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&family=Hind:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "AboutPage",
+  "url": "https://pgfinderlko.online/about.html",
+  "mainEntity": {
+    "@type": "Organization",
+    "name": "PG Lucknow",
+    "url": "https://pgfinderlko.online",
+    "founder": {
+      "@type": "Person",
+      "name": "Vansh Maurya",
+      "jobTitle": "Founder & Developer",
+      "description": "21-year-old developer and founder of PG Lucknow, based in Lucknow, Uttar Pradesh, India."
+    },
+    "foundingLocation": "Lucknow, Uttar Pradesh, India"
+  }
+}
+</script>
+
+<style>
+  :root {
+    --saffron: #FF6B2B;
+    --saffron-light: #FF8C55;
+    --gold: #D4AF37;
+    --gold-light: #F0D590;
+    --maroon: #6E1423;
+    --deep: #170905;
+    --deep2: #2A0F08;
+    --card-bg: #FFF8F3;
+    --white: #ffffff;
+    --text: #2D1A0E;
+    --muted: #8A6A5A;
+    --border: #F0D9CC;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Hind', sans-serif;
+    background: #FFF6EF;
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  nav {
+    background: linear-gradient(120deg, var(--deep) 0%, var(--deep2) 100%);
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 62px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 1px solid rgba(212,175,55,0.35);
+  }
+  .logo { font-family: 'Baloo 2', cursive; font-size: 21px; font-weight: 800; color: var(--white); display:flex; align-items:center; gap:6px; }
+  .logo .arch-icon { display:inline-block; width:16px; height:16px; border-radius:16px 16px 0 0; background: linear-gradient(180deg, var(--gold), var(--saffron)); }
+  .logo span { color: var(--gold); }
+  .nav-btn {
+    padding: 7px 16px; border-radius: 8px; font-size: 13px; font-weight: 600;
+    cursor: pointer; border: 1.5px solid rgba(212,175,55,0.45); background: transparent;
+    color: var(--white); text-decoration: none; display:inline-flex; align-items:center;
+    transition: all 0.25s;
+  }
+  .nav-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+  .hero {
+    background: radial-gradient(ellipse at top, #3D1500 0%, var(--deep) 60%);
+    padding: 50px 20px 40px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-arch {
+    width: 64px; height: 82px; margin: 0 auto 14px;
+    border: 2px solid var(--gold); border-bottom: none;
+    border-radius: 46px 46px 0 0; position: relative;
+  }
+  .hero-arch::after { content:'✦'; position:absolute; top:6px; left:50%; transform:translateX(-50%); color:var(--gold); font-size:12px; }
+  .hero h1 {
+    font-family: 'Baloo 2', cursive; font-size: clamp(24px, 5vw, 36px);
+    font-weight: 800; color: var(--white); margin-bottom: 8px;
+  }
+  .hero h1 span {
+    background: linear-gradient(120deg, var(--gold-light), var(--saffron-light));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .hero p { color: rgba(255,255,255,0.65); font-family:'Cormorant Garamond', serif; font-style:italic; font-size:16px; }
+
+  .content {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 44px 24px 60px;
+  }
+  .content h2 {
+    font-family: 'Baloo 2', cursive;
+    font-size: 22px;
+    color: var(--text);
+    margin: 32px 0 14px;
+    display: flex; align-items:center; gap:10px;
+  }
+  .content h2 .diamond { color: var(--gold); font-size: 14px; }
+  .content h2:first-child { margin-top: 0; }
+  .content p {
+    color: var(--muted);
+    font-size: 16px;
+    line-height: 1.8;
+    margin-bottom: 14px;
+  }
+  .content strong { color: var(--saffron); }
+
+  .founder-card {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    background: white;
+    border: 1.5px solid var(--border);
+    border-top: 3px solid var(--gold);
+    border-radius: 18px;
+    padding: 24px;
+    margin: 24px 0;
+    flex-wrap: wrap;
+  }
+  .founder-avatar {
+    width: 76px; height: 76px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--saffron), var(--gold));
+    color: white; display:flex; align-items:center; justify-content:center;
+    font-family:'Baloo 2', cursive; font-size: 30px; font-weight: 800;
+    flex-shrink: 0;
+  }
+  .founder-info h3 { font-family:'Baloo 2', cursive; font-size: 19px; color: var(--text); }
+  .founder-info .role { color: var(--saffron); font-weight: 700; font-size: 13px; margin-top: 2px; }
+  .founder-info .desc { color: var(--muted); font-size: 14px; margin-top: 6px; line-height: 1.6; }
+
+  .values-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    margin: 20px 0;
+  }
+  .value-item {
+    background: var(--card-bg);
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+  }
+  .value-item .vi { font-size: 22px; margin-bottom: 6px; display:block; }
+  .value-item .vt { font-family:'Baloo 2', cursive; font-weight: 700; font-size: 14px; color: var(--text); }
+  .value-item .vd { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+  .back-link {
+    display: inline-block;
+    margin-top: 20px;
+    color: var(--saffron);
+    font-weight: 700;
+    text-decoration: none;
+    font-family: 'Baloo 2', cursive;
+    font-size: 14px;
+    border-bottom: 2px solid var(--gold);
+    padding-bottom: 2px;
+  }
+
+  .custom-watermark {
+    text-align: center; padding: 14px 20px;
+    background: linear-gradient(120deg, var(--deep) 0%, var(--deep2) 100%);
+    border-top: 2px solid var(--gold); color: var(--white);
+    font-size: 14px; margin-top: 20px;
+  }
+  .watermark-name { font-family: 'Baloo 2', cursive; font-weight: 700; color: var(--gold); }
+
+  @media (max-width: 480px) {
+    .values-grid { grid-template-columns: 1fr; }
+    .founder-card { flex-direction: column; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo"><span class="arch-icon"></span>PG<span>Lucknow</span></div>
+  <a class="nav-btn" href="index.html">← Back to Home</a>
+</nav>
+
+<div class="hero">
+  <div class="hero-arch"></div>
+  <h1>About <span>PG Lucknow</span></h1>
+  <p>The story behind a zero-brokerage PG platform for Lucknow</p>
+</div>
+
+<div class="content">
+  <h2><span class="diamond">◆</span> Our Story</h2>
+  <p>PG Lucknow started with a simple problem — finding a reliable, affordable PG in Lucknow usually means dealing with brokers, hidden charges, and listings that don't match reality. This platform was built to fix that: a place where landlords can list their properties directly, and students or working professionals can search, compare, and connect without a single rupee of brokerage.</p>
+
+  <h2><span class="diamond">◆</span> Meet the Founder</h2>
+  <div class="founder-card">
+    <div class="founder-avatar">VM</div>
+    <div class="founder-info">
+      <h3>Vansh Maurya</h3>
+      <div class="role">Founder & Developer, PG Lucknow</div>
+      <div class="desc">Vansh Maurya is a 21-year-old developer from Lucknow, Uttar Pradesh. He designed and built PG Lucknow end-to-end — from the search experience to the landlord dashboard — with the goal of making PG-hunting simple, transparent, and broker-free for the city's students.</div>
+    </div>
+  </div>
+
+  <h2><span class="diamond">◆</span> What We Stand For</h2>
+  <div class="values-grid">
+    <div class="value-item"><span class="vi">🤝</span><span class="vt">Zero Brokerage</span><div class="vd">Direct contact between students and landlords, always free.</div></div>
+    <div class="value-item"><span class="vi">✅</span><span class="vt">Verified Listings</span><div class="vd">Real properties, real photos, real landlords.</div></div>
+    <div class="value-item"><span class="vi">💬</span><span class="vt">Direct Communication</span><div class="vd">WhatsApp and call, no middlemen involved.</div></div>
+    <div class="value-item"><span class="vi">🏙️</span><span class="vt">Built for Lucknow</span><div class="vd">Local areas, local understanding, local trust.</div></div>
+  </div>
+
+  <h2><span class="diamond">◆</span> Get in Touch</h2>
+  <p>Whether you're a student looking for your next home or a landlord wanting to list your property, PG Lucknow is built for you. Have feedback or a partnership idea? Reach out through the platform — we're always improving.</p>
+
+  <a class="back-link" href="index.html">← Explore PGs in Lucknow</a>
+</div>
+
+<div class="custom-watermark">
+  <span class="watermark-name">Vansh Maurya</span> — Founder & Developer, PG Lucknow
+</div>
+
+</body>
+</html>
