@@ -20,7 +20,7 @@
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
-  "@type": "Organization",
+  "@type": "WebSite",
   "name": "PG Lucknow",
   "url": "https://pgfinderlko.online",
   "description": "Best PG in Lucknow - rent rooms and hostels at zero brokerage",
@@ -560,6 +560,14 @@
   .icon-btn.call-icon-btn:hover { background: var(--tag-bg); border-color: var(--saffron); }
   .card-media { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; }
   .media-thumb { width: 70px; height: 70px; border-radius: 10px; object-fit: cover; flex-shrink: 0; border: 1px solid var(--border); }
+  .media-thumb-wrap { position: relative; flex-shrink: 0; }
+  .media-remove-btn {
+    position: absolute; top: -7px; right: -7px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--red); color: #fff; border: 2px solid #fff;
+    font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    padding: 0; line-height: 1;
+  }
   .modal-gallery img, .modal-gallery video { width: 150px; height: 105px; border-radius: 12px; object-fit: cover; flex-shrink: 0; border: 1px solid var(--border); }
 
   /* ============ MODAL ============ */
@@ -1044,17 +1052,6 @@
     <button class="nav-btn filled auth-btn" id="authBtn" onclick="handleAuthClick()">Login</button>
   </div>
 </nav>
-<script>
-  atOptions = {
-    'key' : 'c9108c09c7ab94e8899bd01b527dde10',
-    'format' : 'iframe',
-    'height' : 60,
-    'width' : 468,
-    'params' : {}
-  };
-</script>
-<script src="https://www.highperformanceformat.com/c9108c09c7ab94e8899bd01b527dde10/invoke.js"></script>
-
 
 <!-- HERO -->
 <div class="hero">
@@ -1198,7 +1195,7 @@
     </div>
     <div class="form-row">
       <div class="form-group">
-        <label class="form-label">Area *</label>
+        <label class="form-label">Area (optional)</label>
         <select class="form-select" id="f-area" onchange="handleAreaChange()">
           <option value="">Select karo</option>
         </select>
@@ -1242,10 +1239,16 @@
       </div>
     </div>
     <div class="form-group">
-      <label class="form-label">Photos / Video (max 5, property real dikhegi)</label>
+      <label class="form-label">Photos (max 3) &amp; Video (max 1)</label>
       <input class="form-input" type="file" id="f-media" accept="image/*,video/*" multiple onchange="previewMediaFiles()">
-      <div class="form-hint" id="mediaExistingHint" style="display:none">Pehle se photos hain. Nayi file choose karoge to purani replace ho jayengi.</div>
-      <div id="mediaPreview" style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;"></div>
+      <div class="form-hint">Photo/Video optional hai, lekin lagane se students ko trust zyada aata hai. Galat file lag gayi? ✕ dabakar hata do.</div>
+      <div id="mediaPreview" style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;"></div>
+      <div id="mediaUploadProgress" style="display:none;margin-top:10px;">
+        <div style="background:var(--border);border-radius:8px;overflow:hidden;height:8px;">
+          <div id="mediaUploadBar" style="background:linear-gradient(120deg,var(--saffron),var(--gold));height:100%;width:0%;transition:width 0.2s;"></div>
+        </div>
+        <div id="mediaUploadText" style="font-size:12px;color:var(--muted);margin-top:6px;"></div>
+      </div>
     </div>
     <div class="form-group">
       <label class="form-label">Aapka Phone Number *</label>
@@ -1313,7 +1316,7 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
   import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
   import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, getDoc, setDoc, arrayUnion, arrayRemove, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-  import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+  import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
   // Configuration completely fine now with your verified API Key
   const firebaseConfig = {
@@ -1340,7 +1343,7 @@
   window.signOut = signOut;
 
   window.firestore = { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, getDoc, setDoc, arrayUnion, arrayRemove, query, where };
-  window.storageFns = { ref: storageRef, uploadBytes, getDownloadURL };
+  window.storageFns = { ref: storageRef, uploadBytesResumable, getDownloadURL };
 
   onAuthStateChanged(auth, async (user) => {
     if (user) {
@@ -1418,6 +1421,8 @@ let currentEnquiryPg = null;
 let currentFilteredList = [];
 let visibleCount = 12;
 const PAGE_SIZE = 12;
+let selectedNewMedia = [];   // File objects chosen but not yet uploaded
+let existingMediaKept = [];  // {url,type} already-uploaded media kept while editing
 
 function isOwner(pg) {
   return !!(clerkUser && pg.ownerId && pg.ownerId === clerkUser.id);
@@ -1459,6 +1464,7 @@ async function loadListingsFromFirebase() {
     filterCards();
   } catch (error) {
     console.error("Error loading docs: ", error);
+    showToast('⚠️ Listings load nahi ho payi: ' + error.message);
   }
 }
 
@@ -1542,16 +1548,18 @@ function renderCards(list) {
       let delay = i * 0.06;
       
       let customAreaBadge = pg.isCustomArea ? '<div class="card-badge custom-area-badge">Custom Area</div>' : '';
+      try {
       let greenBadgeClass = pg.gender === 'Girls' ? 'green' : '';
       let ownerInfo = pg.ownerName ? '<div class="card-owner">🧑‍💼 Posted by ' + escapeHtml(pg.ownerName) + (isOwner(pg) ? ' (You)' : '') + '</div>' : '';
-      
+
       let tagsHtml = "";
-      let activeAmenities = pg.amenities.slice(0,3);
+      let amenitiesList = Array.isArray(pg.amenities) ? pg.amenities : [];
+      let activeAmenities = amenitiesList.slice(0,3);
       for(let j=0; j<activeAmenities.length; j++) {
         tagsHtml += '<span class="tag">' + (amenityIcons[activeAmenities[j]] || activeAmenities[j]) + '</span>';
       }
-      if(pg.amenities.length > 3) {
-        let extraCount = pg.amenities.length - 3;
+      if(amenitiesList.length > 3) {
+        let extraCount = amenitiesList.length - 3;
         tagsHtml += '<span class="tag">+' + extraCount + '</span>';
       }
       
@@ -1566,32 +1574,33 @@ function renderCards(list) {
       let favBtn = '<button class="icon-btn fav-btn' + (isFav ? ' active' : '') + '" title="Favourite" onclick="event.stopPropagation();toggleFavourite(\'' + pg.docId + '\', this)">♥</button>';
 
       // Photo/Video thumbnail (agar upload kiya ho), warna emoji fallback
-      let mediaHtml = pg.emoji;
-      if (pg.media && pg.media.length) {
-        const firstMedia = pg.media[0];
+      let mediaHtml = pg.emoji || '🏠';
+      let mediaList = Array.isArray(pg.media) ? pg.media : [];
+      if (mediaList.length && mediaList[0] && mediaList[0].url) {
+        const firstMedia = mediaList[0];
         mediaHtml = firstMedia.type === 'video'
           ? '<video class="card-media" src="' + firstMedia.url + '" muted loop autoplay playsinline></video>'
-          : '<img class="card-media" src="' + firstMedia.url + '" alt="' + escapeHtml(pg.name) + '">';
+          : '<img class="card-media" src="' + firstMedia.url + '" alt="' + escapeHtml(pg.name || '') + '">';
       }
 
       // WhatsApp aur Call buttons seedha card pe (samne hi, modal khole bina)
-      let waBtn = '<button class="icon-btn wa-icon-btn" title="WhatsApp" onclick="event.stopPropagation();waAction(' + pg.id + ')">💬</button>';
-      let callBtn = '<button class="icon-btn call-icon-btn" title="Call" onclick="event.stopPropagation();callAction(' + pg.id + ')">📞</button>';
+      let waBtn = pg.phone ? '<button class="icon-btn wa-icon-btn" title="WhatsApp" onclick="event.stopPropagation();waAction(' + pg.id + ')">💬</button>' : '';
+      let callBtn = pg.phone ? '<button class="icon-btn call-icon-btn" title="Call" onclick="event.stopPropagation();callAction(' + pg.id + ')">📞</button>' : '';
 
       htmlContent += '<div class="pg-card" style="animation-delay:' + delay + 's" onclick="openDetail(' + pg.id + ')">' +
         '<div style="position:relative">' +
           '<div class="card-img-placeholder">' + mediaHtml + '</div>' +
-          '<div class="card-badge ' + greenBadgeClass + '">' + pg.gender + '</div>' +
+          '<div class="card-badge ' + greenBadgeClass + '">' + (pg.gender || '') + '</div>' +
           customAreaBadge +
         '</div>' +
         '<div class="card-body">' +
-          '<div class="card-title">' + escapeHtml(pg.name) + '</div>' +
-          '<div class="card-location">📍 ' + escapeHtml(pg.area) + ', Lucknow</div>' +
-          (pg.docId ? '<a href="/pg/' + pg.docId + '" class="seo-link" onclick="event.stopPropagation()">🔗 View full page</a>' : '') +
+          '<div class="card-title">' + escapeHtml(pg.name || 'PG Room') + '</div>' +
+          '<div class="card-location">📍 ' + escapeHtml(pg.area || 'Lucknow') + ', Lucknow</div>' +
+          (pg.docId ? '<a href="/listing?id=' + pg.docId + '" class="seo-link" onclick="event.stopPropagation()">🔗 View full page</a>' : '') +
           ownerInfo +
           '<div class="card-tags">' + tagsHtml + '</div>' +
           '<div class="card-footer">' +
-            '<div class="price">₹' + pg.price.toLocaleString() + ' <span>/month</span></div>' +
+            '<div class="price">₹' + (Number(pg.price)||0).toLocaleString() + ' <span>/month</span></div>' +
             '<div class="card-actions">' +
               actionButtons +
               favBtn +
@@ -1601,6 +1610,9 @@ function renderCards(list) {
           '</div>' +
         '</div>' +
       '</div>';
+      } catch (cardErr) {
+        console.error('Card render error for listing', pg && pg.id, cardErr);
+      }
     }
     grid.innerHTML = htmlContent;
   }
@@ -1619,13 +1631,17 @@ function filterCards() {
   const budget = parseInt(document.getElementById('budgetFilter').value) || Infinity;
   const area = document.getElementById('areaFilter').value;
   let filtered = allListings.filter(pg => {
-    const matchSearch = !search || pg.name.toLowerCase().includes(search) || pg.area.toLowerCase().includes(search) || pg.address.toLowerCase().includes(search);
+    const pgName = (pg.name || '').toLowerCase();
+    const pgArea = (pg.area || '').toLowerCase();
+    const pgAddress = (pg.address || '').toLowerCase();
+    const pgAmenities = Array.isArray(pg.amenities) ? pg.amenities : [];
+    const matchSearch = !search || pgName.includes(search) || pgArea.includes(search) || pgAddress.includes(search);
     const matchGender = !gender || pg.gender === gender;
-    const matchBudget = pg.price <= budget;
+    const matchBudget = (Number(pg.price) || 0) <= budget;
     let matchArea = true;
     if (area === OTHER_VALUE) matchArea = !!pg.isCustomArea;
     else if (area) matchArea = pg.area === area;
-    const matchAmenity = !activeFilter || pg.amenities.includes(activeFilter);
+    const matchAmenity = !activeFilter || pgAmenities.includes(activeFilter);
     return matchSearch && matchGender && matchBudget && matchArea && matchAmenity;
   });
   currentFilteredList = filtered;
@@ -1657,26 +1673,39 @@ function setFilter(el, val) {
 function openDetail(id) {
   const pg = allListings.find(p => p.id===id);
   if (!pg) return;
-  document.getElementById('modal-title').textContent = pg.name;
-  document.getElementById('modal-location').innerHTML = '📍 ' + escapeHtml(pg.address) + ', Lucknow &nbsp;·&nbsp; ' + escapeHtml(pg.gender) + (pg.isCustomArea ? ' &nbsp;·&nbsp; ✏️ Custom Area' : '');
+  document.getElementById('modal-title').textContent = pg.name || 'PG Room';
+  document.getElementById('modal-location').innerHTML = '📍 ' + escapeHtml(pg.address || pg.area || 'Lucknow') + ', Lucknow &nbsp;·&nbsp; ' + escapeHtml(pg.gender || '') + (pg.isCustomArea ? ' &nbsp;·&nbsp; ✏️ Custom Area' : '');
 
   const galleryBox = document.getElementById('modal-gallery');
-  if (pg.media && pg.media.length) {
+  const mediaList = Array.isArray(pg.media) ? pg.media : [];
+  if (mediaList.length) {
     galleryBox.style.display = 'flex';
-    galleryBox.innerHTML = pg.media.map(m => m.type === 'video'
+    galleryBox.innerHTML = mediaList.map(m => (m && m.type === 'video')
       ? '<video src="' + m.url + '" controls></video>'
-      : '<img src="' + m.url + '" alt="' + escapeHtml(pg.name) + '">'
+      : '<img src="' + (m && m.url) + '" alt="' + escapeHtml(pg.name || '') + '">'
     ).join('');
   } else {
     galleryBox.style.display = 'none';
     galleryBox.innerHTML = '';
   }
 
-  document.getElementById('modal-price').innerHTML = '₹' + pg.price.toLocaleString() + ' <small>/month</small>';
-  document.getElementById('modal-amenities').innerHTML = pg.amenities.map(a => '<div class="amenity-item">' + (amenityIcons[a] || a) + '</div>').join('') || '<div class="amenity-item">Koi amenities listed nahi</div>';
-  document.getElementById('modal-details').textContent = pg.desc;
-  document.getElementById('modal-wa').onclick = () => { waAction(pg.id); };
-  document.getElementById('modal-call').onclick = () => { window.open('tel:+91' + pg.phone); };
+  document.getElementById('modal-price').innerHTML = '₹' + (Number(pg.price)||0).toLocaleString() + ' <small>/month</small>';
+  const amenitiesList = Array.isArray(pg.amenities) ? pg.amenities : [];
+  document.getElementById('modal-amenities').innerHTML = amenitiesList.map(a => '<div class="amenity-item">' + (amenityIcons[a] || a) + '</div>').join('') || '<div class="amenity-item">Koi amenities listed nahi</div>';
+  document.getElementById('modal-details').textContent = pg.desc || '';
+
+  const modalWa = document.getElementById('modal-wa');
+  const modalCall = document.getElementById('modal-call');
+  if (pg.phone) {
+    modalWa.style.display = '';
+    modalCall.style.display = '';
+    modalWa.onclick = () => { waAction(pg.id); };
+    modalCall.onclick = () => { window.open('tel:+91' + pg.phone); };
+  } else {
+    modalWa.style.display = 'none';
+    modalCall.style.display = 'none';
+  }
+
   document.getElementById('modal-enquiry').onclick = () => { openEnquiryForm(pg); };
   document.getElementById('modal-report').onclick = () => { reportListing(pg); };
   document.getElementById('detailModal').classList.add('open');
@@ -1731,8 +1760,11 @@ function openEditListing(id) {
   }
 
   document.querySelectorAll('.amenity-check').forEach(el => {
-    if (pg.amenities.includes(el.dataset.val)) el.classList.add('checked');
+    if ((pg.amenities || []).includes(el.dataset.val)) el.classList.add('checked');
   });
+
+  existingMediaKept = Array.isArray(pg.media) ? pg.media.slice() : [];
+  renderMediaPreview();
 
   document.getElementById('addModal').classList.add('open');
 }
@@ -1744,26 +1776,72 @@ function resetListingForm() {
   document.getElementById('customAreaRow').style.display = 'none';
   document.getElementById('customAreaHint').style.display = 'none';
   document.getElementById('f-media').value = '';
+  selectedNewMedia = [];
+  existingMediaKept = [];
   document.getElementById('mediaPreview').innerHTML = '';
-  document.getElementById('mediaExistingHint').style.display = 'none';
+  document.getElementById('mediaUploadProgress').style.display = 'none';
   document.querySelectorAll('.amenity-check.checked').forEach(el => el.classList.remove('checked'));
 }
 
 function toggleAmenity(el) { el.classList.toggle('checked'); }
 
+function renderMediaPreview() {
+  const box = document.getElementById('mediaPreview');
+  let html = '';
+  existingMediaKept.forEach((m, idx) => {
+    html += '<div class="media-thumb-wrap">' +
+      (m.type === 'video'
+        ? '<video class="media-thumb" src="' + m.url + '" muted></video>'
+        : '<img class="media-thumb" src="' + m.url + '">') +
+      '<button type="button" class="media-remove-btn" onclick="removeExistingMedia(' + idx + ')">✕</button>' +
+      '</div>';
+  });
+  selectedNewMedia.forEach((file, idx) => {
+    const url = URL.createObjectURL(file);
+    html += '<div class="media-thumb-wrap">' +
+      (file.type.startsWith('video')
+        ? '<video class="media-thumb" src="' + url + '" muted></video>'
+        : '<img class="media-thumb" src="' + url + '">') +
+      '<button type="button" class="media-remove-btn" onclick="removeNewMedia(' + idx + ')">✕</button>' +
+      '</div>';
+  });
+  box.innerHTML = html;
+}
+
+function removeNewMedia(idx) {
+  selectedNewMedia.splice(idx, 1);
+  renderMediaPreview();
+}
+
+function removeExistingMedia(idx) {
+  existingMediaKept.splice(idx, 1);
+  renderMediaPreview();
+}
+
 function previewMediaFiles() {
   const input = document.getElementById('f-media');
-  const box = document.getElementById('mediaPreview');
-  box.innerHTML = '';
-  const files = Array.from(input.files || []).slice(0, 5);
-  files.forEach(file => {
-    const url = URL.createObjectURL(file);
-    if (file.type.startsWith('video')) {
-      box.innerHTML += '<video class="media-thumb" src="' + url + '" muted></video>';
-    } else {
-      box.innerHTML += '<img class="media-thumb" src="' + url + '">';
+  const newFiles = Array.from(input.files || []);
+
+  newFiles.forEach(file => {
+    const isVideo = file.type.startsWith('video');
+    const existingImages = existingMediaKept.filter(m => m.type !== 'video').length;
+    const existingVideos = existingMediaKept.filter(m => m.type === 'video').length;
+    const newImages = selectedNewMedia.filter(f => !f.type.startsWith('video')).length;
+    const newVideos = selectedNewMedia.filter(f => f.type.startsWith('video')).length;
+
+    if (isVideo && (existingVideos + newVideos) >= 1) {
+      showToast('⚠️ Sirf 1 video allowed hai');
+      return;
     }
+    if (!isVideo && (existingImages + newImages) >= 3) {
+      showToast('⚠️ Sirf 3 photo allowed hain');
+      return;
+    }
+    selectedNewMedia.push(file);
   });
+
+  input.value = ''; // reset input taaki wahi file dobara bhi select ho sake
+  renderMediaPreview();
 }
 
 function compressImage(file, maxWidth, quality) {
@@ -1789,22 +1867,66 @@ function compressImage(file, maxWidth, quality) {
   });
 }
 
+function formatSeconds(sec) {
+  if (!isFinite(sec) || sec <= 0) return '';
+  if (sec < 60) return Math.ceil(sec) + 's';
+  return Math.ceil(sec / 60) + ' min';
+}
+
 async function uploadMediaFiles() {
-  const input = document.getElementById('f-media');
-  let files = Array.from(input.files || []);
-  if (!files.length) return null;
-  if (files.length > 5) { showToast('⚠️ Max 5 files upload hongi'); files = files.slice(0, 5); }
+  if (!selectedNewMedia.length) {
+    // Koi nayi file nahi — jo pehle se the (edit ke case me) wahi final list hai
+    return existingMediaKept.slice();
+  }
+
+  const progressWrap = document.getElementById('mediaUploadProgress');
+  const bar = document.getElementById('mediaUploadBar');
+  const text = document.getElementById('mediaUploadText');
+  progressWrap.style.display = 'block';
+
+  const totalBytes = selectedNewMedia.reduce((sum, f) => sum + f.size, 0);
+  const uploadedBytesPerFile = new Array(selectedNewMedia.length).fill(0);
+  const startTime = Date.now();
+
+  function updateProgress() {
+    const uploadedSoFar = uploadedBytesPerFile.reduce((a, b) => a + b, 0);
+    const pct = totalBytes ? Math.min(100, Math.round((uploadedSoFar / totalBytes) * 100)) : 0;
+    bar.style.width = pct + '%';
+    const elapsedSec = (Date.now() - startTime) / 1000;
+    const speed = uploadedSoFar / Math.max(elapsedSec, 0.4);
+    const remainingBytes = Math.max(totalBytes - uploadedSoFar, 0);
+    const etaText = speed > 0 ? formatSeconds(remainingBytes / speed) : '';
+    text.textContent = pct + '% upload ho gaya' + (etaText ? ' — lagbhag ' + etaText + ' baaki' : '');
+  }
+  updateProgress();
+
   const uploaded = [];
-  for (const file of files) {
+  for (let i = 0; i < selectedNewMedia.length; i++) {
+    const file = selectedNewMedia[i];
     const isVideo = file.type.startsWith('video');
     const uploadBlob = isVideo ? file : await compressImage(file);
     const path = 'listings/' + clerkUser.id + '/' + Date.now() + '_' + file.name;
     const fileRef = window.storageFns.ref(window.storage, path);
-    await window.storageFns.uploadBytes(fileRef, uploadBlob);
+
+    await new Promise((resolve, reject) => {
+      const task = window.storageFns.uploadBytesResumable(fileRef, uploadBlob);
+      task.on('state_changed', (snap) => {
+        uploadedBytesPerFile[i] = snap.bytesTransferred;
+        updateProgress();
+      }, (err) => reject(err), () => resolve());
+    });
+
+    uploadedBytesPerFile[i] = file.size;
+    updateProgress();
+
     const url = await window.storageFns.getDownloadURL(fileRef);
     uploaded.push({ url: url, type: isVideo ? 'video' : 'image' });
   }
-  return uploaded;
+
+  text.textContent = '✅ Upload complete!';
+  setTimeout(() => { progressWrap.style.display = 'none'; bar.style.width = '0%'; }, 1200);
+
+  return existingMediaKept.concat(uploaded);
 }
 
 async function submitListing() {
@@ -1818,14 +1940,18 @@ async function submitListing() {
   const rent = document.getElementById('f-rent').value;
   const phone = document.getElementById('f-phone').value.trim();
 
-  if (!name || !areaSelectVal || !rent || !phone) { showToast('⚠️ Sabhi required fields bharo!'); return; }
+  // Naam, rent, aur phone zaroori hain, baaki sab optional
+  if (!name || !rent || !phone) { showToast('⚠️ PG ka naam, rent, aur phone number zaroor bharo!'); return; }
+  if (!/^[6-9]\d{9}$/.test(phone)) { showToast('⚠️ Phone number 10 digit ka valid hona chahiye'); return; }
 
   let finalArea, isCustomArea;
   if (areaSelectVal === OTHER_VALUE) {
-    if (!customArea) { showToast('⚠️ Apna custom area likho!'); return; }
+    if (!customArea) { showToast('⚠️ Custom area likho, ya "Select karo" wapas choose karo'); return; }
     finalArea = customArea; isCustomArea = true;
-  } else {
+  } else if (areaSelectVal) {
     finalArea = areaSelectVal; isCustomArea = false;
+  } else {
+    finalArea = 'Lucknow'; isCustomArea = false;
   }
 
   const amenities = [...document.querySelectorAll('.amenity-check.checked')].map(el => el.dataset.val);
@@ -1840,15 +1966,18 @@ async function submitListing() {
     desc: document.getElementById('f-desc').value || 'Accha PG, contact karo details ke liye.',
   };
 
+  const submitBtn = document.getElementById('listingSubmitBtn');
+  const originalBtnText = submitBtn.textContent;
+
   try {
-    const newMedia = await uploadMediaFiles();
-    if (newMedia) {
-      pgData.media = newMedia;
-    } else if (editId) {
-      const existing = allListings.find(p => p.id === parseInt(editId));
-      if (existing && existing.media) pgData.media = existing.media;
+    if (selectedNewMedia.length) {
+      submitBtn.textContent = '📤 Upload ho raha hai...';
+      submitBtn.disabled = true;
     }
-    if (newMedia) showToast('📤 Photos upload ho gayi, listing save ho rahi hai...');
+
+    pgData.media = await uploadMediaFiles();
+
+    submitBtn.textContent = '💾 Listing save ho rahi hai...';
 
     if (editId) {
       const existing = allListings.find(p => p.id === parseInt(editId));
@@ -1870,7 +1999,11 @@ async function submitListing() {
     closeModal('addModal');
     loadListingsFromFirebase();
   } catch (e) {
-    showToast('⚠️ Error saving to cloud: ' + e.message);
+    console.error(e);
+    showToast('⚠️ Error: ' + e.message + ' (Firebase Storage rules check karo)');
+  } finally {
+    submitBtn.textContent = originalBtnText;
+    submitBtn.disabled = false;
   }
   resetListingForm();
 }
@@ -2086,6 +2219,7 @@ initCookieBanner();
 
 </body>
 </html>
-   
+
+
 
 
