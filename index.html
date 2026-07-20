@@ -1,4 +1,4 @@
-  <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -20,7 +20,7 @@
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
-  "@type": "WebSite",
+  "@type": "Organization",
   "name": "PG Lucknow",
   "url": "https://pgfinderlko.online",
   "description": "Best PG in Lucknow - rent rooms and hostels at zero brokerage",
@@ -1044,6 +1044,17 @@
     <button class="nav-btn filled auth-btn" id="authBtn" onclick="handleAuthClick()">Login</button>
   </div>
 </nav>
+<script>
+  atOptions = {
+    'key' : 'c9108c09c7ab94e8899bd01b527dde10',
+    'format' : 'iframe',
+    'height' : 60,
+    'width' : 468,
+    'params' : {}
+  };
+</script>
+<script src="https://www.highperformanceformat.com/c9108c09c7ab94e8899bd01b527dde10/invoke.js"></script>
+
 
 <!-- HERO -->
 <div class="hero">
@@ -1187,7 +1198,7 @@
     </div>
     <div class="form-row">
       <div class="form-group">
-        <label class="form-label">Area (optional)</label>
+        <label class="form-label">Area *</label>
         <select class="form-select" id="f-area" onchange="handleAreaChange()">
           <option value="">Select karo</option>
         </select>
@@ -1231,15 +1242,14 @@
       </div>
     </div>
     <div class="form-group">
-      <label class="form-label">Photos (max 3) &amp; Video (max 1)</label>
+      <label class="form-label">Photos / Video (max 5, property real dikhegi)</label>
       <input class="form-input" type="file" id="f-media" accept="image/*,video/*" multiple onchange="previewMediaFiles()">
-      <div class="form-hint">Photo/Video optional hai, lekin lagane se students ko trust zyada aata hai</div>
       <div class="form-hint" id="mediaExistingHint" style="display:none">Pehle se photos hain. Nayi file choose karoge to purani replace ho jayengi.</div>
       <div id="mediaPreview" style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;"></div>
     </div>
     <div class="form-group">
-      <label class="form-label">Aapka Phone Number (optional)</label>
-      <input class="form-input" id="f-phone" type="tel" placeholder="WhatsApp number — baad mein bhi add kar sakte ho">
+      <label class="form-label">Aapka Phone Number *</label>
+      <input class="form-input" id="f-phone" type="tel" placeholder="WhatsApp number">
     </div>
     <div class="form-group">
       <label class="form-label">Description (optional)</label>
@@ -1565,8 +1575,8 @@ function renderCards(list) {
       }
 
       // WhatsApp aur Call buttons seedha card pe (samne hi, modal khole bina)
-      let waBtn = pg.phone ? '<button class="icon-btn wa-icon-btn" title="WhatsApp" onclick="event.stopPropagation();waAction(' + pg.id + ')">💬</button>' : '';
-      let callBtn = pg.phone ? '<button class="icon-btn call-icon-btn" title="Call" onclick="event.stopPropagation();callAction(' + pg.id + ')">📞</button>' : '';
+      let waBtn = '<button class="icon-btn wa-icon-btn" title="WhatsApp" onclick="event.stopPropagation();waAction(' + pg.id + ')">💬</button>';
+      let callBtn = '<button class="icon-btn call-icon-btn" title="Call" onclick="event.stopPropagation();callAction(' + pg.id + ')">📞</button>';
 
       htmlContent += '<div class="pg-card" style="animation-delay:' + delay + 's" onclick="openDetail(' + pg.id + ')">' +
         '<div style="position:relative">' +
@@ -1665,19 +1675,8 @@ function openDetail(id) {
   document.getElementById('modal-price').innerHTML = '₹' + pg.price.toLocaleString() + ' <small>/month</small>';
   document.getElementById('modal-amenities').innerHTML = pg.amenities.map(a => '<div class="amenity-item">' + (amenityIcons[a] || a) + '</div>').join('') || '<div class="amenity-item">Koi amenities listed nahi</div>';
   document.getElementById('modal-details').textContent = pg.desc;
-
-  const modalWa = document.getElementById('modal-wa');
-  const modalCall = document.getElementById('modal-call');
-  if (pg.phone) {
-    modalWa.style.display = '';
-    modalCall.style.display = '';
-    modalWa.onclick = () => { waAction(pg.id); };
-    modalCall.onclick = () => { window.open('tel:+91' + pg.phone); };
-  } else {
-    modalWa.style.display = 'none';
-    modalCall.style.display = 'none';
-  }
-
+  document.getElementById('modal-wa').onclick = () => { waAction(pg.id); };
+  document.getElementById('modal-call').onclick = () => { window.open('tel:+91' + pg.phone); };
   document.getElementById('modal-enquiry').onclick = () => { openEnquiryForm(pg); };
   document.getElementById('modal-report').onclick = () => { reportListing(pg); };
   document.getElementById('detailModal').classList.add('open');
@@ -1756,15 +1755,8 @@ function previewMediaFiles() {
   const input = document.getElementById('f-media');
   const box = document.getElementById('mediaPreview');
   box.innerHTML = '';
-  const allFiles = Array.from(input.files || []);
-  const images = allFiles.filter(f => f.type.startsWith('image')).slice(0, 3);
-  const videos = allFiles.filter(f => f.type.startsWith('video')).slice(0, 1);
-
-  if (allFiles.length > images.length + videos.length) {
-    showToast('⚠️ Sirf 3 photo + 1 video use hongi, baaki ignore ho gayin');
-  }
-
-  images.concat(videos).forEach(file => {
+  const files = Array.from(input.files || []).slice(0, 5);
+  files.forEach(file => {
     const url = URL.createObjectURL(file);
     if (file.type.startsWith('video')) {
       box.innerHTML += '<video class="media-thumb" src="' + url + '" muted></video>';
@@ -1799,13 +1791,9 @@ function compressImage(file, maxWidth, quality) {
 
 async function uploadMediaFiles() {
   const input = document.getElementById('f-media');
-  const allFiles = Array.from(input.files || []);
-  if (!allFiles.length) return null;
-
-  const images = allFiles.filter(f => f.type.startsWith('image')).slice(0, 3);
-  const videos = allFiles.filter(f => f.type.startsWith('video')).slice(0, 1);
-  const files = images.concat(videos);
-
+  let files = Array.from(input.files || []);
+  if (!files.length) return null;
+  if (files.length > 5) { showToast('⚠️ Max 5 files upload hongi'); files = files.slice(0, 5); }
   const uploaded = [];
   for (const file of files) {
     const isVideo = file.type.startsWith('video');
@@ -1830,18 +1818,14 @@ async function submitListing() {
   const rent = document.getElementById('f-rent').value;
   const phone = document.getElementById('f-phone').value.trim();
 
-  // Sirf naam aur rent zaroori hain, baaki sab optional
-  if (!name || !rent) { showToast('⚠️ PG ka naam aur monthly rent zaroor bharo!'); return; }
-  if (phone && !/^[6-9]\d{9}$/.test(phone)) { showToast('⚠️ Phone number 10 digit ka valid hona chahiye (ya khali chhodo)'); return; }
+  if (!name || !areaSelectVal || !rent || !phone) { showToast('⚠️ Sabhi required fields bharo!'); return; }
 
   let finalArea, isCustomArea;
   if (areaSelectVal === OTHER_VALUE) {
-    if (!customArea) { showToast('⚠️ Custom area likho, ya "Select karo" wapas choose karo'); return; }
+    if (!customArea) { showToast('⚠️ Apna custom area likho!'); return; }
     finalArea = customArea; isCustomArea = true;
-  } else if (areaSelectVal) {
-    finalArea = areaSelectVal; isCustomArea = false;
   } else {
-    finalArea = 'Lucknow'; isCustomArea = false;
+    finalArea = areaSelectVal; isCustomArea = false;
   }
 
   const amenities = [...document.querySelectorAll('.amenity-check.checked')].map(el => el.dataset.val);
@@ -1856,17 +1840,7 @@ async function submitListing() {
     desc: document.getElementById('f-desc').value || 'Accha PG, contact karo details ke liye.',
   };
 
-  const submitBtn = document.getElementById('listingSubmitBtn');
-  const originalBtnText = submitBtn.textContent;
-  const mediaInput = document.getElementById('f-media');
-  const hasNewMedia = mediaInput.files && mediaInput.files.length > 0;
-
   try {
-    if (hasNewMedia) {
-      submitBtn.textContent = '📤 Photos/Video upload ho rahi hain...';
-      submitBtn.disabled = true;
-    }
-
     const newMedia = await uploadMediaFiles();
     if (newMedia) {
       pgData.media = newMedia;
@@ -1874,8 +1848,7 @@ async function submitListing() {
       const existing = allListings.find(p => p.id === parseInt(editId));
       if (existing && existing.media) pgData.media = existing.media;
     }
-
-    submitBtn.textContent = '💾 Listing save ho rahi hai...';
+    if (newMedia) showToast('📤 Photos upload ho gayi, listing save ho rahi hai...');
 
     if (editId) {
       const existing = allListings.find(p => p.id === parseInt(editId));
@@ -1897,11 +1870,7 @@ async function submitListing() {
     closeModal('addModal');
     loadListingsFromFirebase();
   } catch (e) {
-    console.error(e);
-    showToast('⚠️ Error: ' + e.message + ' (Firebase Storage rules check karo)');
-  } finally {
-    submitBtn.textContent = originalBtnText;
-    submitBtn.disabled = false;
+    showToast('⚠️ Error saving to cloud: ' + e.message);
   }
   resetListingForm();
 }
@@ -2117,5 +2086,6 @@ initCookieBanner();
 
 </body>
 </html>
+   
 
 
