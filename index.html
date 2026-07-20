@@ -1239,9 +1239,9 @@
       </div>
     </div>
     <div class="form-group">
-      <label class="form-label">Photos (max 3) &amp; Video (max 1)</label>
-      <input class="form-input" type="file" id="f-media" accept="image/*,video/*" multiple onchange="previewMediaFiles()">
-      <div class="form-hint">Photo/Video optional hai, lekin lagane se students ko trust zyada aata hai. Galat file lag gayi? ✕ dabakar hata do.</div>
+      <label class="form-label">Photos (max 3, optional)</label>
+      <input class="form-input" type="file" id="f-media" accept="image/*" multiple onchange="previewMediaFiles()">
+      <div class="form-hint">Photo optional hai, lekin lagane se students ko trust zyada aata hai. Galat photo lag gayi? ✕ dabakar hata do.</div>
       <div id="mediaPreview" style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;"></div>
       <div id="mediaUploadProgress" style="display:none;margin-top:10px;">
         <div style="background:var(--border);border-radius:8px;overflow:hidden;height:8px;">
@@ -1820,20 +1820,12 @@ function removeExistingMedia(idx) {
 
 function previewMediaFiles() {
   const input = document.getElementById('f-media');
-  const newFiles = Array.from(input.files || []);
+  const newFiles = Array.from(input.files || []).filter(f => f.type.startsWith('image'));
 
   newFiles.forEach(file => {
-    const isVideo = file.type.startsWith('video');
-    const existingImages = existingMediaKept.filter(m => m.type !== 'video').length;
-    const existingVideos = existingMediaKept.filter(m => m.type === 'video').length;
-    const newImages = selectedNewMedia.filter(f => !f.type.startsWith('video')).length;
-    const newVideos = selectedNewMedia.filter(f => f.type.startsWith('video')).length;
-
-    if (isVideo && (existingVideos + newVideos) >= 1) {
-      showToast('⚠️ Sirf 1 video allowed hai');
-      return;
-    }
-    if (!isVideo && (existingImages + newImages) >= 3) {
+    const existingImages = existingMediaKept.length;
+    const newImages = selectedNewMedia.length;
+    if ((existingImages + newImages) >= 3) {
       showToast('⚠️ Sirf 3 photo allowed hain');
       return;
     }
@@ -1873,9 +1865,39 @@ function formatSeconds(sec) {
   return Math.ceil(sec / 60) + ' min';
 }
 
+// Ek single photo upload karta hai, 20 second se zyada atke to fail maan ke aage badh jata hai
+function uploadOnePhotoWithTimeout(fileRef, blob, onProgress) {
+  return new Promise((resolve) => {
+    let settled = false;
+    const timer = setTimeout(() => {
+      if (!settled) { settled = true; resolve({ ok: false, url: null }); }
+    }, 20000);
+
+    try {
+      const task = window.storageFns.uploadBytesResumable(fileRef, blob);
+      task.on('state_changed',
+        (snap) => { if (onProgress) onProgress(snap.bytesTransferred); },
+        () => { if (!settled) { settled = true; clearTimeout(timer); resolve({ ok: false, url: null }); } },
+        async () => {
+          if (settled) return;
+          settled = true; clearTimeout(timer);
+          try {
+            const url = await window.storageFns.getDownloadURL(fileRef);
+            resolve({ ok: true, url: url });
+          } catch (e) {
+            resolve({ ok: false, url: null });
+          }
+        }
+      );
+    } catch (e) {
+      if (!settled) { settled = true; clearTimeout(timer); resolve({ ok: false, url: null }); }
+    }
+  });
+}
+
 async function uploadMediaFiles() {
   if (!selectedNewMedia.length) {
-    // Koi nayi file nahi — jo pehle se the (edit ke case me) wahi final list hai
+    // Koi nayi photo nahi — jo pehle se thi (edit ke case me) wahi final list hai
     return existingMediaKept.slice();
   }
 
@@ -1901,30 +1923,38 @@ async function uploadMediaFiles() {
   updateProgress();
 
   const uploaded = [];
+  let failedCount = 0;
+
   for (let i = 0; i < selectedNewMedia.length; i++) {
     const file = selectedNewMedia[i];
-    const isVideo = file.type.startsWith('video');
-    const uploadBlob = isVideo ? file : await compressImage(file);
-    const path = 'listings/' + clerkUser.id + '/' + Date.now() + '_' + file.name;
+    let uploadBlob = file;
+    try { uploadBlob = await compressImage(file); } catch (e) { /* compress fail ho to original hi bhej do */ }
+
+    const path = 'listings/' + clerkUser.id + '/' + Date.now() + '_' + i + '_' + file.name;
     const fileRef = window.storageFns.ref(window.storage, path);
 
-    await new Promise((resolve, reject) => {
-      const task = window.storageFns.uploadBytesResumable(fileRef, uploadBlob);
-      task.on('state_changed', (snap) => {
-        uploadedBytesPerFile[i] = snap.bytesTransferred;
-        updateProgress();
-      }, (err) => reject(err), () => resolve());
+    const result = await uploadOnePhotoWithTimeout(fileRef, uploadBlob, (bytes) => {
+      uploadedBytesPerFile[i] = bytes;
+      updateProgress();
     });
 
     uploadedBytesPerFile[i] = file.size;
     updateProgress();
 
-    const url = await window.storageFns.getDownloadURL(fileRef);
-    uploaded.push({ url: url, type: isVideo ? 'video' : 'image' });
+    if (result.ok) {
+      uploaded.push({ url: result.url, type: 'image' });
+    } else {
+      failedCount++;
+    }
   }
 
-  text.textContent = '✅ Upload complete!';
-  setTimeout(() => { progressWrap.style.display = 'none'; bar.style.width = '0%'; }, 1200);
+  if (failedCount > 0) {
+    text.textContent = '⚠️ ' + failedCount + ' photo upload nahi ho payi, baaki PG list ho rahi hai';
+    showToast('⚠️ Kuch photos upload nahi ho payin, lekin PG list ho rahi hai');
+  } else {
+    text.textContent = '✅ Upload complete!';
+  }
+  setTimeout(() => { progressWrap.style.display = 'none'; bar.style.width = '0%'; }, 1500);
 
   return existingMediaKept.concat(uploaded);
 }
@@ -1975,7 +2005,13 @@ async function submitListing() {
       submitBtn.disabled = true;
     }
 
-    pgData.media = await uploadMediaFiles();
+    try {
+      pgData.media = await uploadMediaFiles();
+    } catch (mediaErr) {
+      console.error('Media upload failed completely:', mediaErr);
+      showToast('⚠️ Photos upload nahi ho payin, PG bina photo ke list ho rahi hai');
+      pgData.media = existingMediaKept.slice();
+    }
 
     submitBtn.textContent = '💾 Listing save ho rahi hai...';
 
