@@ -1239,18 +1239,6 @@
       </div>
     </div>
     <div class="form-group">
-      <label class="form-label">Photos (max 3, optional)</label>
-      <input class="form-input" type="file" id="f-media" accept="image/*" multiple onchange="previewMediaFiles()">
-      <div class="form-hint">Photo optional hai, lekin lagane se students ko trust zyada aata hai. Galat photo lag gayi? ✕ dabakar hata do.</div>
-      <div id="mediaPreview" style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;"></div>
-      <div id="mediaUploadProgress" style="display:none;margin-top:10px;">
-        <div style="background:var(--border);border-radius:8px;overflow:hidden;height:8px;">
-          <div id="mediaUploadBar" style="background:linear-gradient(120deg,var(--saffron),var(--gold));height:100%;width:0%;transition:width 0.2s;"></div>
-        </div>
-        <div id="mediaUploadText" style="font-size:12px;color:var(--muted);margin-top:6px;"></div>
-      </div>
-    </div>
-    <div class="form-group">
       <label class="form-label">Aapka Phone Number *</label>
       <input class="form-input" id="f-phone" type="tel" placeholder="WhatsApp number">
     </div>
@@ -1421,8 +1409,6 @@ let currentEnquiryPg = null;
 let currentFilteredList = [];
 let visibleCount = 12;
 const PAGE_SIZE = 12;
-let selectedNewMedia = [];   // File objects chosen but not yet uploaded
-let existingMediaKept = [];  // {url,type} already-uploaded media kept while editing
 
 function isOwner(pg) {
   return !!(clerkUser && pg.ownerId && pg.ownerId === clerkUser.id);
@@ -1763,9 +1749,6 @@ function openEditListing(id) {
     if ((pg.amenities || []).includes(el.dataset.val)) el.classList.add('checked');
   });
 
-  existingMediaKept = Array.isArray(pg.media) ? pg.media.slice() : [];
-  renderMediaPreview();
-
   document.getElementById('addModal').classList.add('open');
 }
 
@@ -1775,189 +1758,11 @@ function resetListingForm() {
   document.getElementById('f-gender').value='Boys';
   document.getElementById('customAreaRow').style.display = 'none';
   document.getElementById('customAreaHint').style.display = 'none';
-  document.getElementById('f-media').value = '';
-  selectedNewMedia = [];
-  existingMediaKept = [];
-  document.getElementById('mediaPreview').innerHTML = '';
-  document.getElementById('mediaUploadProgress').style.display = 'none';
   document.querySelectorAll('.amenity-check.checked').forEach(el => el.classList.remove('checked'));
 }
 
 function toggleAmenity(el) { el.classList.toggle('checked'); }
 
-function renderMediaPreview() {
-  const box = document.getElementById('mediaPreview');
-  let html = '';
-  existingMediaKept.forEach((m, idx) => {
-    html += '<div class="media-thumb-wrap">' +
-      (m.type === 'video'
-        ? '<video class="media-thumb" src="' + m.url + '" muted></video>'
-        : '<img class="media-thumb" src="' + m.url + '">') +
-      '<button type="button" class="media-remove-btn" onclick="removeExistingMedia(' + idx + ')">✕</button>' +
-      '</div>';
-  });
-  selectedNewMedia.forEach((file, idx) => {
-    const url = URL.createObjectURL(file);
-    html += '<div class="media-thumb-wrap">' +
-      (file.type.startsWith('video')
-        ? '<video class="media-thumb" src="' + url + '" muted></video>'
-        : '<img class="media-thumb" src="' + url + '">') +
-      '<button type="button" class="media-remove-btn" onclick="removeNewMedia(' + idx + ')">✕</button>' +
-      '</div>';
-  });
-  box.innerHTML = html;
-}
-
-function removeNewMedia(idx) {
-  selectedNewMedia.splice(idx, 1);
-  renderMediaPreview();
-}
-
-function removeExistingMedia(idx) {
-  existingMediaKept.splice(idx, 1);
-  renderMediaPreview();
-}
-
-function previewMediaFiles() {
-  const input = document.getElementById('f-media');
-  const newFiles = Array.from(input.files || []).filter(f => f.type.startsWith('image'));
-
-  newFiles.forEach(file => {
-    const existingImages = existingMediaKept.length;
-    const newImages = selectedNewMedia.length;
-    if ((existingImages + newImages) >= 3) {
-      showToast('⚠️ Sirf 3 photo allowed hain');
-      return;
-    }
-    selectedNewMedia.push(file);
-  });
-
-  input.value = ''; // reset input taaki wahi file dobara bhi select ho sake
-  renderMediaPreview();
-}
-
-function compressImage(file, maxWidth, quality) {
-  maxWidth = maxWidth || 1280;
-  quality = quality || 0.75;
-  return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onload = () => {
-        let w = img.width, h = img.height;
-        if (w > maxWidth) { h = Math.round(h * maxWidth / w); w = maxWidth; }
-        const canvas = document.createElement('canvas');
-        canvas.width = w; canvas.height = h;
-        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-        canvas.toBlob((blob) => resolve(blob || file), 'image/jpeg', quality);
-      };
-      img.onerror = () => resolve(file);
-      img.src = e.target.result;
-    };
-    reader.onerror = () => resolve(file);
-    reader.readAsDataURL(file);
-  });
-}
-
-function formatSeconds(sec) {
-  if (!isFinite(sec) || sec <= 0) return '';
-  if (sec < 60) return Math.ceil(sec) + 's';
-  return Math.ceil(sec / 60) + ' min';
-}
-
-// Ek single photo upload karta hai, 20 second se zyada atke to fail maan ke aage badh jata hai
-function uploadOnePhotoWithTimeout(fileRef, blob, onProgress) {
-  return new Promise((resolve) => {
-    let settled = false;
-    const timer = setTimeout(() => {
-      if (!settled) { settled = true; resolve({ ok: false, url: null }); }
-    }, 20000);
-
-    try {
-      const task = window.storageFns.uploadBytesResumable(fileRef, blob);
-      task.on('state_changed',
-        (snap) => { if (onProgress) onProgress(snap.bytesTransferred); },
-        () => { if (!settled) { settled = true; clearTimeout(timer); resolve({ ok: false, url: null }); } },
-        async () => {
-          if (settled) return;
-          settled = true; clearTimeout(timer);
-          try {
-            const url = await window.storageFns.getDownloadURL(fileRef);
-            resolve({ ok: true, url: url });
-          } catch (e) {
-            resolve({ ok: false, url: null });
-          }
-        }
-      );
-    } catch (e) {
-      if (!settled) { settled = true; clearTimeout(timer); resolve({ ok: false, url: null }); }
-    }
-  });
-}
-
-async function uploadMediaFiles() {
-  if (!selectedNewMedia.length) {
-    // Koi nayi photo nahi — jo pehle se thi (edit ke case me) wahi final list hai
-    return existingMediaKept.slice();
-  }
-
-  const progressWrap = document.getElementById('mediaUploadProgress');
-  const bar = document.getElementById('mediaUploadBar');
-  const text = document.getElementById('mediaUploadText');
-  progressWrap.style.display = 'block';
-
-  const totalBytes = selectedNewMedia.reduce((sum, f) => sum + f.size, 0);
-  const uploadedBytesPerFile = new Array(selectedNewMedia.length).fill(0);
-  const startTime = Date.now();
-
-  function updateProgress() {
-    const uploadedSoFar = uploadedBytesPerFile.reduce((a, b) => a + b, 0);
-    const pct = totalBytes ? Math.min(100, Math.round((uploadedSoFar / totalBytes) * 100)) : 0;
-    bar.style.width = pct + '%';
-    const elapsedSec = (Date.now() - startTime) / 1000;
-    const speed = uploadedSoFar / Math.max(elapsedSec, 0.4);
-    const remainingBytes = Math.max(totalBytes - uploadedSoFar, 0);
-    const etaText = speed > 0 ? formatSeconds(remainingBytes / speed) : '';
-    text.textContent = pct + '% upload ho gaya' + (etaText ? ' — lagbhag ' + etaText + ' baaki' : '');
-  }
-  updateProgress();
-
-  const uploaded = [];
-  let failedCount = 0;
-
-  for (let i = 0; i < selectedNewMedia.length; i++) {
-    const file = selectedNewMedia[i];
-    let uploadBlob = file;
-    try { uploadBlob = await compressImage(file); } catch (e) { /* compress fail ho to original hi bhej do */ }
-
-    const path = 'listings/' + clerkUser.id + '/' + Date.now() + '_' + i + '_' + file.name;
-    const fileRef = window.storageFns.ref(window.storage, path);
-
-    const result = await uploadOnePhotoWithTimeout(fileRef, uploadBlob, (bytes) => {
-      uploadedBytesPerFile[i] = bytes;
-      updateProgress();
-    });
-
-    uploadedBytesPerFile[i] = file.size;
-    updateProgress();
-
-    if (result.ok) {
-      uploaded.push({ url: result.url, type: 'image' });
-    } else {
-      failedCount++;
-    }
-  }
-
-  if (failedCount > 0) {
-    text.textContent = '⚠️ ' + failedCount + ' photo upload nahi ho payi, baaki PG list ho rahi hai';
-    showToast('⚠️ Kuch photos upload nahi ho payin, lekin PG list ho rahi hai');
-  } else {
-    text.textContent = '✅ Upload complete!';
-  }
-  setTimeout(() => { progressWrap.style.display = 'none'; bar.style.width = '0%'; }, 1500);
-
-  return existingMediaKept.concat(uploaded);
-}
 
 async function submitListing() {
   if (!clerkUser) { showToast('⚠️ Pehle login karo'); handleAuthClick(); return; }
@@ -2000,20 +1805,8 @@ async function submitListing() {
   const originalBtnText = submitBtn.textContent;
 
   try {
-    if (selectedNewMedia.length) {
-      submitBtn.textContent = '📤 Upload ho raha hai...';
-      submitBtn.disabled = true;
-    }
-
-    try {
-      pgData.media = await uploadMediaFiles();
-    } catch (mediaErr) {
-      console.error('Media upload failed completely:', mediaErr);
-      showToast('⚠️ Photos upload nahi ho payin, PG bina photo ke list ho rahi hai');
-      pgData.media = existingMediaKept.slice();
-    }
-
     submitBtn.textContent = '💾 Listing save ho rahi hai...';
+    submitBtn.disabled = true;
 
     if (editId) {
       const existing = allListings.find(p => p.id === parseInt(editId));
@@ -2255,6 +2048,7 @@ initCookieBanner();
 
 </body>
 </html>
+
 
 
 
