@@ -37,12 +37,13 @@
   .reveal { opacity:0; transform:translateY(24px); transition:opacity .7s ease, transform .7s ease; }
   .reveal.visible { opacity:1; transform:translateY(0); }
 
-  nav { background:linear-gradient(120deg,var(--deep) 0%,var(--deep2) 100%); padding:0 16px; display:flex; align-items:center; justify-content:space-between; height:60px; position:sticky; top:0; z-index:100; box-shadow:0 2px 24px rgba(0,0,0,.35); border-bottom:1px solid rgba(212,175,55,.35); }
-  .logo { font-family:'Baloo 2',cursive; font-size:19px; font-weight:800; color:#fff; display:flex; align-items:center; gap:5px; }
-  .logo .arch-icon { display:inline-block; width:14px; height:14px; border-radius:14px 14px 0 0; background:linear-gradient(180deg,var(--gold),var(--saffron)); }
+  nav { background:linear-gradient(120deg,var(--deep) 0%,var(--deep2) 100%); padding:0 12px; display:flex; align-items:center; justify-content:space-between; height:56px; position:sticky; top:0; z-index:100; box-shadow:0 2px 24px rgba(0,0,0,.35); border-bottom:1px solid rgba(212,175,55,.35); gap:6px; }
+  .logo { font-family:'Baloo 2',cursive; font-size:17px; font-weight:800; color:#fff; display:flex; align-items:center; gap:4px; flex-shrink:0; }
+  .logo .arch-icon { display:inline-block; width:13px; height:13px; border-radius:13px 13px 0 0; background:linear-gradient(180deg,var(--gold),var(--saffron)); }
   .logo span { color:var(--gold); }
-  .nav-btns { display:flex; gap:6px; align-items:center; }
-  .nav-btn { padding:6px 11px; border-radius:8px; font-family:'Hind',sans-serif; font-size:12px; font-weight:600; cursor:pointer; border:none; transition:.25s; white-space:nowrap; position:relative; }
+  .nav-btns { display:flex; gap:5px; align-items:center; overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch; max-width:calc(100vw - 90px); }
+  .nav-btns::-webkit-scrollbar { display:none; }
+  .nav-btn { padding:6px 10px; border-radius:8px; font-family:'Hind',sans-serif; font-size:11px; font-weight:600; cursor:pointer; border:none; transition:.25s; white-space:nowrap; position:relative; flex-shrink:0; max-width:118px; overflow:hidden; text-overflow:ellipsis; }
   .nav-btn.outline { background:transparent; border:1.5px solid rgba(212,175,55,.45); color:#fff; }
   .nav-btn.outline:hover { border-color:var(--gold); color:var(--gold); background:rgba(212,175,55,.08); }
   .nav-btn.filled { background:linear-gradient(120deg,var(--saffron),var(--gold)); color:var(--deep); font-weight:700; }
@@ -216,14 +217,14 @@
 <body>
 
 <nav>
-  <div class="logo"><span class="arch-icon"></span>PG<span>Lucknow</span></div>
+  <div class="logo"><span class="arch-icon"></span>PG<span>Lko</span></div>
   <div class="nav-btns">
     <a class="nav-btn outline" href="about.html" style="text-decoration:none;">About</a>
     <button class="nav-btn outline" id="dashboardBtn" onclick="openLandlordDashboard()" style="display:none;">
-      📊 Dashboard<span class="nav-badge" id="dashBadge"></span>
+      📊<span class="nav-badge" id="dashBadge"></span>
     </button>
-    <button class="nav-btn outline" id="profileBtn" onclick="location.href='profile.html'" style="display:none;">👤 Profile</button>
-    <button class="nav-btn outline" id="listPgBtn" onclick="handleListPgClick()" style="display:none;">+ List Property</button>
+    <button class="nav-btn outline" id="profileBtn" onclick="location.href='profile.html'" style="display:none;">👤</button>
+    <button class="nav-btn outline" id="listPgBtn" onclick="handleListPgClick()" style="display:none;">+ List</button>
     <button class="nav-btn filled auth-btn" id="authBtn" onclick="handleAuthClick()">Login</button>
   </div>
 </nav>
@@ -665,8 +666,10 @@ function updateAuthUI() {
   const fab = document.getElementById('fabBtn');
   const dashBtn = document.getElementById('dashboardBtn');
   if (clerkUser) {
-    const roleTag = clerkUser.role === 'landlord' ? ' 🏠' : clerkUser.role === 'professional' ? ' 💼' : clerkUser.role === 'student' ? ' 🎓' : '';
-    btn.textContent = clerkUser.name + roleTag + ' · Logout';
+    const roleTag = clerkUser.role === 'landlord' ? '🏠' : clerkUser.role === 'professional' ? '💼' : clerkUser.role === 'student' ? '🎓' : '';
+    const firstName = (clerkUser.name || '').split(' ')[0];
+    btn.textContent = roleTag + ' ' + firstName + ' ⏻';
+    btn.title = 'Logout';
     profileBtn.style.display = 'inline-block';
     if (clerkUser.role === 'landlord') {
       listBtn.style.display = 'inline-block';
